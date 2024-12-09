@@ -19,29 +19,27 @@ A Python-based portfolio optimization tool that implements Modern Portfolio Theo
 **Installation**
 
 **Clone the repository**
-git clone https://github.com/Aeebeh/portfolio-optimization.git
+- git clone https://github.com/Aeebeh/portfolio-optimization.git
 
 **Navigate to project directory**
-cd portfolio-optimization
+- cd portfolio-optimization
 
 **Install required packages**
-pip install -r requirements.txt
+- pip install -r requirements.txt
 
 **Usage**
 
 **Run the portfolio optimizer**
-python src/portfolio_optimizer.py
+- python src/portfolio_optimizer.py
 
 **Example input:**
-Copy=== Portfolio Optimizer ===
+- === Portfolio Optimizer ===
 
-Enter ticker symbols separated by commas
-Example: SPY, GLD, USD
-Tickers: AAPL, MSFT, GOOGL
-
-Years of historical data (1-10): 5
-
-Initial investment amount ($): 100000
+- Enter ticker symbols separated by commas
+- Example: SPY, GLD, USD
+- Tickers: AAPL, MSFT, GOOGL
+- Years of historical data (1-10): 5
+- Initial investment amount ($): 100000
 
 **Sample Output**
 Optimal portfolio weights
