@@ -51,10 +51,10 @@ A Python-based portfolio optimization tool that implements Modern Portfolio Theo
 
 **Project Structure**
 portfolio-optimization/
-├── LICENSE
-├── Portfolio Optimization/
-├── README.md
-└── requirements.txt
+- LICENSE
+- Portfolio Optimization/
+- README.md
+- requirements.txt
 
 **Future Enhancements**
 - Additional optimization objectives
