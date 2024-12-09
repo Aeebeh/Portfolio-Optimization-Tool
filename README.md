@@ -6,14 +6,8 @@ A Python-based portfolio optimization tool that implements Modern Portfolio Theo
 **Features**
 - Data Collection: Automated fetching of historical price data using yfinance
 - Portfolio Optimization: Implementation of MPT using scipy's optimization
-- Risk Analysis:
--- Value at Risk (VaR) calculations
--- Monte Carlo simulations
--- Portfolio metrics (returns, volatility, Sharpe ratio)
-- Interactive Visualization:
--- Efficient frontier plotting
--- Portfolio value distribution
--- Monte Carlo simulation paths
+- Risk Analysis: Value at Risk (VaR) calculations, Monte Carlo simulations, Portfolio metrics (returns, volatility, Sharpe ratio)
+- Interactive Visualization: Efficient frontier plotting, Portfolio value distribution, Monte Carlo simulation paths
 
 **Technologies Used**
 - Python 3.8+
@@ -23,15 +17,18 @@ A Python-based portfolio optimization tool that implements Modern Portfolio Theo
 - plotly for interactive visualizations
 
 **Installation**
+
 **Clone the repository**
 git clone https://github.com/Aeebeh/portfolio-optimization.git
+
 **Navigate to project directory**
 cd portfolio-optimization
+
 **Install required packages**
 pip install -r requirements.txt
 
-
 **Usage**
+
 **Run the portfolio optimizer**
 python src/portfolio_optimizer.py
 
