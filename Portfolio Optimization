@@ -1,236 +1,300 @@
-# Install required packages
-!pip install yfinance numpy pandas matplotlib scipy ipywidgets
+##Portfolio Optimization App Yfinance V1.5
 
-# Import required libraries
 import numpy as np
 import pandas as pd
 import yfinance as yf
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 from scipy.optimize import minimize
 from datetime import datetime, timedelta
-from ipywidgets import widgets
-from IPython.display import display
 
-# Default values for portfolio analysis
-DEFAULT_TICKERS = ['SPY', 'GLD', 'AAPL']
-DEFAULT_YEARS = 5
-DEFAULT_INVESTMENT = 10000
+def get_user_inputs():
+    print("\n=== Portfolio Optimizer ===")
+    print("\nEnter ticker symbols separated by commas")
+    print("Example: SPY, GLD, USD")
+    tickers = input("Tickers: ").replace(" ", "").upper().split(",")
 
-def analyze_portfolio(tickers=DEFAULT_TICKERS, years=DEFAULT_YEARS, investment=DEFAULT_INVESTMENT):
-   end_date = datetime.now()
-   start_date = end_date - timedelta(days=years*365)
-   
-   print("\nFetching market data...")
-   data = get_stock_data(tickers, start_date, end_date)
-   valid_tickers = data.columns.tolist()
-   
-   if len(valid_tickers) < 2:
-       print("Error: Need at least 2 valid tickers for optimization")
-       return
-       
-   print(f"\nAnalyzing {len(valid_tickers)} assets...")
-   
-   returns = data.pct_change().dropna()
-   optimal_weights = optimize_portfolio(returns)
-   
-   if optimal_weights is not None:
-       opt_return, opt_risk = calculate_portfolio_metrics(optimal_weights, returns)
-       var_95 = calculate_var(optimal_weights, returns, 0.95)
-       var_99 = calculate_var(optimal_weights, returns, 0.99)
-       portfolio_simulations = monte_carlo_simulation(optimal_weights, returns, investment)
+    while True:
+        try:
+            years = int(input("\nYears of historical data (1-10): "))
+            if 1 <= years <= 10:
+                break
+            print("Please enter a number between 1 and 10")
+        except ValueError:
+            print("Please enter a valid number")
 
-       if portfolio_simulations is not None:
-           plot_results_matplotlib(portfolio_simulations, returns, optimal_weights)
-           
-           final_values = portfolio_simulations[:, -1]
-           
-           print("\nOptimal Portfolio Allocation:")
-           for ticker, weight in zip(valid_tickers, optimal_weights):
-               print(f"{ticker}: {weight*100:.2f}%")
+    while True:
+        try:
+            investment = float(input("\nInitial investment amount ($): "))
+            if investment > 0:
+                break
+            print("Please enter a positive amount")
+        except ValueError:
+            print("Please enter a valid number")
 
-           if opt_return is not None and opt_risk is not None:
-               print(f"\nRisk Metrics:")
-               print(f"Expected Annual Return: {opt_return*100:.2f}%")
-               print(f"Annual Risk: {opt_risk*100:.2f}%")
-               print(f"Sharpe Ratio: {opt_return/opt_risk:.2f}")
-
-           if var_95 is not None and var_99 is not None:
-               print(f"95% Value at Risk: {var_95*100:.2f}%")
-               print(f"99% Value at Risk: {var_99*100:.2f}%")
-
-           print("\nMonte Carlo Simulation Results:")
-           print(f"5th Percentile Portfolio Value: ${np.percentile(final_values, 5):,.2f}")
-           print(f"Median Portfolio Value: ${np.median(final_values):,.2f}")
-           print(f"95th Percentile Portfolio Value: ${np.percentile(final_values, 95):,.2f}")
+    return tickers, years, investment
 
 def get_stock_data(tickers, start_date, end_date):
-   data = pd.DataFrame()
-   for ticker in tickers:
-       try:
-           stock = yf.Ticker(ticker)
-           hist = stock.history(start=start_date, end=end_date)['Close']
-           data[ticker] = hist
-       except Exception as e:
-           print(f"Error downloading {ticker}: {str(e)}")
-   return data
+    data = pd.DataFrame()
+    for ticker in tickers:
+        try:
+            stock = yf.Ticker(ticker)
+            hist = stock.history(start=start_date, end=end_date)['Close']
+            data[ticker] = hist
+        except Exception as e:
+            print(f"Error downloading {ticker}: {str(e)}")
+    return data
 
 def calculate_portfolio_metrics(weights, returns):
-   try:
-       portfolio_return = np.sum(returns.mean() * weights) * 252
-       portfolio_risk = np.sqrt(np.dot(weights.T, np.dot(returns.cov() * 252, weights)))
-       return portfolio_return, portfolio_risk
-   except Exception as e:
-       print(f"Error calculating portfolio metrics: {str(e)}")
-       return None, None
+    try:
+        portfolio_return = np.sum(returns.mean() * weights) * 252
+        portfolio_risk = np.sqrt(np.dot(weights.T, np.dot(returns.cov() * 252, weights)))
+        return portfolio_return, portfolio_risk
+    except Exception as e:
+        print(f"Error calculating portfolio metrics: {str(e)}")
+        return None, None
 
 def calculate_var(weights, returns, confidence_level=0.95):
-   try:
-       clean_returns = returns.dropna()
-       if clean_returns.empty:
-           raise ValueError("No valid return data available")
-       
-       portfolio_returns = np.sum(clean_returns * weights, axis=1)
-       
-       if len(portfolio_returns) == 0:
-           raise ValueError("No valid portfolio returns calculated")
-       
-       var = np.percentile(portfolio_returns, (1 - confidence_level) * 100)
-       return -var
-   except Exception as e:
-       print(f"Error calculating VaR: {str(e)}")
-       return None
+    try:
+        clean_returns = returns.dropna()
+        if clean_returns.empty:
+            raise ValueError("No valid return data available")
+
+        portfolio_returns = np.sum(clean_returns * weights, axis=1)
+
+        if len(portfolio_returns) == 0:
+            raise ValueError("No valid portfolio returns calculated")
+
+        var = np.percentile(portfolio_returns, (1 - confidence_level) * 100)
+        return -var
+    except Exception as e:
+        print(f"Error calculating VaR: {str(e)}")
+        return None
 
 def monte_carlo_simulation(weights, returns, initial_investment, num_simulations=1000, time_horizon=252):
-   try:
-       clean_returns = returns.dropna()
-       if clean_returns.empty:
-           raise ValueError("No valid return data available")
-           
-       mean_returns = clean_returns.mean()
-       cov_matrix = clean_returns.cov()
-       
-       simulated_returns = np.random.multivariate_normal(
-           mean_returns, cov_matrix, (num_simulations, time_horizon)
-       )
-       
-       portfolio_values = np.zeros((num_simulations, time_horizon))
-       
-       for i in range(num_simulations):
-           portfolio_values[i, 0] = initial_investment
-           for t in range(1, time_horizon):
-               portfolio_return = np.sum(simulated_returns[i, t] * weights)
-               portfolio_values[i, t] = portfolio_values[i, t-1] * (1 + portfolio_return)
-       
-       return portfolio_values
-   except Exception as e:
-       print(f"Error in Monte Carlo simulation: {str(e)}")
-       return None
+    try:
+        clean_returns = returns.dropna()
+        if clean_returns.empty:
+            raise ValueError("No valid return data available")
+
+        mean_returns = clean_returns.mean()
+        cov_matrix = clean_returns.cov()
+
+        simulated_returns = np.random.multivariate_normal(
+            mean_returns, cov_matrix, (num_simulations, time_horizon)
+        )
+
+        portfolio_values = np.zeros((num_simulations, time_horizon))
+
+        for i in range(num_simulations):
+            portfolio_values[i, 0] = initial_investment
+            for t in range(1, time_horizon):
+                portfolio_return = np.sum(simulated_returns[i, t] * weights)
+                portfolio_values[i, t] = portfolio_values[i, t-1] * (1 + portfolio_return)
+
+        return portfolio_values
+    except Exception as e:
+        print(f"Error in Monte Carlo simulation: {str(e)}")
+        return None
 
 def optimize_portfolio(returns, risk_free_rate=0.02):
-   try:
-       num_assets = returns.shape[1]
-       
-       def objective(weights):
-           portfolio_return, portfolio_risk = calculate_portfolio_metrics(weights, returns)
-           if portfolio_return is None or portfolio_risk is None:
-               return np.inf
-           sharpe_ratio = (portfolio_return - risk_free_rate) / portfolio_risk
-           return -sharpe_ratio
-       
-       constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
-       bounds = tuple((0, 1) for asset in range(num_assets))
-       initial_weights = np.array([1/num_assets] * num_assets)
-       
-       result = minimize(objective, initial_weights, method='SLSQP', 
-                        bounds=bounds, constraints=constraints)
-       
-       return result.x
-   except Exception as e:
-       print(f"Error optimizing portfolio: {str(e)}")
-       return None
+    try:
+        num_assets = returns.shape[1]
 
-def plot_results_matplotlib(portfolio_simulations, returns, optimal_weights):
-   plt.figure(figsize=(15, 15))
-   
-   # Plot 1: Efficient Frontier
-   plt.subplot(3, 1, 1)
-   num_portfolios = 1000
-   returns_array = []
-   risk_array = []
-   for _ in range(num_portfolios):
-       weights = np.random.random(len(returns.columns))
-       weights = weights/np.sum(weights)
-       portfolio_return, portfolio_risk = calculate_portfolio_metrics(weights, returns)
-       returns_array.append(portfolio_return)
-       risk_array.append(portfolio_risk)
-   
-   plt.scatter(risk_array, returns_array, c='blue', alpha=0.5, label='Possible Portfolios')
-   opt_return, opt_risk = calculate_portfolio_metrics(optimal_weights, returns)
-   plt.scatter([opt_risk], [opt_return], c='red', marker='*', s=200, label='Optimal Portfolio')
-   plt.xlabel('Risk (Standard Deviation)')
-   plt.ylabel('Expected Return')
-   plt.title('Efficient Frontier')
-   plt.legend()
-   
-   # Plot 2: Distribution
-   plt.subplot(3, 1, 2)
-   final_values = portfolio_simulations[:, -1]
-   plt.hist(final_values, bins=50)
-   plt.axvline(np.percentile(final_values, 5), color='r', linestyle='--')
-   plt.xlabel('Portfolio Value ($)')
-   plt.ylabel('Frequency')
-   plt.title('Distribution of Final Portfolio Values (1-Year)')
-   
-   # Plot 3: Monte Carlo Paths
-   plt.subplot(3, 1, 3)
-   time_points = np.arange(portfolio_simulations.shape[1])
-   for i in range(0, portfolio_simulations.shape[0], 10):
-       plt.plot(time_points, portfolio_simulations[i], 'b-', alpha=0.1)
-   plt.plot(time_points, np.median(portfolio_simulations, axis=0), 'r--', label='Median Path')
-   plt.xlabel('Trading Days')
-   plt.ylabel('Portfolio Value ($)')
-   plt.title('Monte Carlo Simulation of Portfolio Value')
-   plt.legend()
-   
-   plt.tight_layout()
-   plt.show()
+        def objective(weights):
+            portfolio_return, portfolio_risk = calculate_portfolio_metrics(weights, returns)
+            if portfolio_return is None or portfolio_risk is None:
+                return np.inf
+            sharpe_ratio = (portfolio_return - risk_free_rate) / portfolio_risk
+            return -sharpe_ratio
 
-# Create widgets for interactive input
-def create_portfolio_widgets():
-   ticker_input = widgets.Text(
-       value=','.join(DEFAULT_TICKERS),
-       description='Tickers:',
-       style={'description_width': 'initial'}
-   )
-   
-   year_slider = widgets.IntSlider(
-       value=DEFAULT_YEARS,
-       min=1,
-       max=10,
-       description='Years:',
-       style={'description_width': 'initial'}
-   )
-   
-   investment_input = widgets.FloatText(
-       value=DEFAULT_INVESTMENT,
-       description='Investment ($):',
-       style={'description_width': 'initial'}
-   )
-   
-   analyze_button = widgets.Button(description='Analyze Portfolio')
-   output = widgets.Output()
-   
-   def on_button_clicked(b):
-       with output:
-           output.clear_output()
-           tickers = ticker_input.value.replace(" ", "").upper().split(",")
-           years = year_slider.value
-           investment = investment_input.value
-           analyze_portfolio(tickers, years, investment)
-   
-   analyze_button.on_click(on_button_clicked)
-   
-   display(ticker_input, year_slider, investment_input, analyze_button, output)
+        constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+        bounds = tuple((0, 1) for asset in range(num_assets))
+        initial_weights = np.array([1/num_assets] * num_assets)
 
-# Run the interactive widget interface
-create_portfolio_widgets()
+        result = minimize(objective, initial_weights, method='SLSQP',
+                         bounds=bounds, constraints=constraints)
+
+        return result.x
+    except Exception as e:
+        print(f"Error optimizing portfolio: {str(e)}")
+        return None
+
+def plot_interactive_results(portfolio_simulations, returns, optimal_weights):
+    # Generate efficient frontier points
+    num_portfolios = 1000
+    returns_array = []
+    risk_array = []
+    for _ in range(num_portfolios):
+        weights = np.random.random(len(returns.columns))
+        weights = weights/np.sum(weights)
+        portfolio_return, portfolio_risk = calculate_portfolio_metrics(weights, returns)
+        returns_array.append(portfolio_return)
+        risk_array.append(portfolio_risk)
+
+    # Create 3-panel subplot
+    fig = make_subplots(rows=3, cols=1, vertical_spacing=0.1)
+
+    # Plot 1: Efficient Frontier
+    fig.add_trace(
+        go.Scatter(x=risk_array, y=returns_array, mode='markers',
+                  marker=dict(color='blue', size=4, opacity=0.5),
+                  name='Possible Portfolios'),
+        row=1, col=1
+    )
+
+    # Add optimal portfolio point
+    opt_return, opt_risk = calculate_portfolio_metrics(optimal_weights, returns)
+    fig.add_trace(
+        go.Scatter(x=[opt_risk], y=[opt_return], mode='markers',
+                  marker=dict(color='red', size=10, symbol='star'),
+                  name='Optimal Portfolio'),
+        row=1, col=1
+    )
+
+    # Plot 2: Distribution
+    final_values = portfolio_simulations[:, -1]
+    hist = np.histogram(final_values, bins=50)
+
+    fig.add_trace(
+        go.Bar(x=hist[1][:-1], y=hist[0], name="Distribution"),
+        row=2, col=1
+    )
+
+    fig.add_vline(x=np.percentile(final_values, 5), line_dash="dash",
+                  line_color="red", row=2, col=1)
+
+    # Plot 3: Monte Carlo Paths
+    time_points = np.arange(portfolio_simulations.shape[1])
+
+    for i in range(0, portfolio_simulations.shape[0], 10):
+        fig.add_trace(
+            go.Scatter(x=time_points, y=portfolio_simulations[i],
+                      mode='lines', line=dict(color='blue', width=0.5),
+                      opacity=0.1, showlegend=False),
+            row=3, col=1
+        )
+
+    median_line = np.median(portfolio_simulations, axis=0)
+    fig.add_trace(
+        go.Scatter(x=time_points, y=median_line, mode='lines',
+                  line=dict(color='red', width=2, dash='dash'),
+                  name='Median Path'),
+        row=3, col=1
+    )
+
+    # Update layout
+    fig.update_layout(
+        height=1200,
+        hovermode='x unified',
+        title_text="Portfolio Analysis",
+        showlegend=True
+    )
+
+    fig.update_xaxes(title_text="Risk (Standard Deviation)", row=1, col=1)
+    fig.update_yaxes(title_text="Expected Return", row=1, col=1)
+
+    fig.update_xaxes(title_text="Portfolio Value ($) After 1 Year", row=2, col=1)
+    fig.update_yaxes(title_text="Frequency", row=2, col=1)
+
+    fig.update_xaxes(title_text="Trading Days", row=3, col=1)
+    fig.update_yaxes(title_text="Portfolio Value ($) After 1 Year ", row=3, col=1)
+
+    return fig
+
+def save_results(filename, results_text):
+    try:
+        with open(filename, 'w') as f:
+            f.write(results_text)
+        return True
+    except Exception as e:
+        print(f"Error saving results: {str(e)}")
+        return False
+
+def main():
+    print("\nWelcome to the Portfolio Optimizer!")
+
+    # Get user inputs
+    tickers, years, investment = get_user_inputs()
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=years*365)
+
+    print("\nFetching market data...")
+    data = get_stock_data(tickers, start_date, end_date)
+    valid_tickers = data.columns.tolist()
+
+    if len(valid_tickers) < 2:
+        print("Error: Need at least 2 valid tickers for optimization")
+        return
+
+    print(f"\nAnalyzing {len(valid_tickers)} assets...")
+
+    returns = data.pct_change().dropna()
+    optimal_weights = optimize_portfolio(returns)
+
+    results_text = ""
+
+    if optimal_weights is not None:
+        opt_return, opt_risk = calculate_portfolio_metrics(optimal_weights, returns)
+        var_95 = calculate_var(optimal_weights, returns, 0.95)
+        var_99 = calculate_var(optimal_weights, returns, 0.99)
+        portfolio_simulations = monte_carlo_simulation(optimal_weights, returns, investment)
+
+        if portfolio_simulations is not None:
+            # Create interactive plots
+            fig = plot_interactive_results(portfolio_simulations, returns, optimal_weights)
+            fig.show()
+
+            final_values = portfolio_simulations[:, -1]
+
+            # Generate results text
+            results_text += "=== Portfolio Analysis Results ===\n\n"
+            results_text += "Optimal Portfolio Allocation:\n"
+            for ticker, weight in zip(valid_tickers, optimal_weights):
+                line = f"{ticker}: {weight*100:.2f}%\n"
+                results_text += line
+                print(line.strip())
+
+            if opt_return is not None and opt_risk is not None:
+                results_text += f"\nRisk Metrics:\n"
+                results_text += f"Expected Annual Return: {opt_return*100:.2f}%\n"
+                results_text += f"Annual Risk: {opt_risk*100:.2f}%\n"
+                results_text += f"Sharpe Ratio: {opt_return/opt_risk:.2f}\n"
+
+                print(f"\nRisk Metrics:")
+                print(f"Expected Annual Return: {opt_return*100:.2f}%")
+                print(f"Annual Risk: {opt_risk*100:.2f}%")
+                print(f"Sharpe Ratio: {opt_return/opt_risk:.2f}")
+
+            if var_95 is not None and var_99 is not None:
+                results_text += f"95% Value at Risk: {var_95*100:.2f}%\n"
+                results_text += f"99% Value at Risk: {var_99*100:.2f}%\n"
+
+                print(f"95% Value at Risk: {var_95*100:.2f}%")
+                print(f"99% Value at Risk: {var_99*100:.2f}%")
+
+            results_text += f"\nMonte Carlo Simulation Results:\n"
+            results_text += f"5th Percentile Portfolio Value: ${np.percentile(final_values, 5):,.2f}\n"
+            results_text += f"Median Portfolio Value: ${np.median(final_values):,.2f}\n"
+            results_text += f"95th Percentile Portfolio Value: ${np.percentile(final_values, 95):,.2f}\n"
+
+            print("\nMonte Carlo Simulation Results:")
+            print(f"5th Percentile Portfolio Value: ${np.percentile(final_values, 5):,.2f}")
+            print(f"Median Portfolio Value: ${np.median(final_values):,.2f}")
+            print(f"95th Percentile Portfolio Value: ${np.percentile(final_values, 95):,.2f}")
+
+            # Save results
+            save = input("\nWould you like to save the results? (y/n): ").lower()
+            if save == 'y':
+                filename = f"portfolio_analysis_{datetime.now().strftime('%Y%m%d_%H%M')}.txt"
+                if save_results(filename, results_text):
+                    print(f"\nResults saved to {filename}")
+                else:
+                    print("\nFailed to save results")
+        else:
+            print("Monte Carlo simulation failed")
+    else:
+        print("Portfolio optimization failed")
+
+if __name__ == "__main__":
+    main()
