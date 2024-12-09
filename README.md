@@ -23,16 +23,16 @@ A Python-based portfolio optimization tool that implements Modern Portfolio Theo
 - plotly for interactive visualizations
 
 **Installation**
-# Clone the repository
+**Clone the repository**
 git clone https://github.com/Aeebeh/portfolio-optimization.git
-# Navigate to project directory
+**Navigate to project directory**
 cd portfolio-optimization
-# Install required packages
+**Install required packages**
 pip install -r requirements.txt
 
 
 **Usage**
-# Run the portfolio optimizer
+**Run the portfolio optimizer**
 python src/portfolio_optimizer.py
 
 **Example input:**
