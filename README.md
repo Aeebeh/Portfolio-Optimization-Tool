@@ -36,43 +36,42 @@ A Python-based portfolio optimization tool that implements Modern Portfolio Theo
 - === Portfolio Optimizer ===
 
 - Enter ticker symbols separated by commas
-- Example: SPY, GLD, USD
-- Tickers: AAPL, MSFT, GOOGL
-- Years of historical data (1-10): 5
+- Example Tickers: AAPL, MSFT, GOOGL
+- Years of historical data (1-10): 10
 - Initial investment amount ($): 100000
 
 **Sample Output**
-Optimal portfolio weights
-Expected annual return
-Annual risk
-Sharpe ratio
-Value at Risk metrics
-Monte Carlo simulation results
-Interactive visualizations
+- Optimal portfolio weights
+- Expected annual return
+- Annual risk
+- Sharpe ratio
+- Value at Risk metrics
+- Monte Carlo simulation results
+- Interactive visualizations
 
 **Project Structure**
-src/portfolio_optimizer.py: Main implementation
-requirements.txt: Required Python packages
-examples/: Sample notebooks and use cases
-docs/: Additional documentation
-tests/: Unit tests
+- src/portfolio_optimizer.py: Main implementation
+-requirements.txt: Required Python packages
+ - examples/: Sample notebooks and use cases
+- docs/: Additional documentation
+- tests/: Unit tests
 
 **Future Enhancements**
-Additional optimization objectives
-Real-time data integration
-Portfolio rebalancing suggestions
-Machine learning-based predictions
-Enhanced risk metrics
+- Additional optimization objectives
+- Real-time data integration
+- Portfolio rebalancing suggestions
+- Machine learning-based predictions
+- Enhanced risk metrics
 
 **Contributing**
-Feel free to fork the project and submit pull requests. For major changes, please open an issue first to discuss the proposed change.
+- Feel free to fork the project and submit pull requests. For major changes, please open an issue first to discuss the proposed change.
 
 **License**
-MIT
+- MIT
 
 **Author**
-Aeebeh
+- Aeebeh
 
 **Acknowledgments**
-Modern Portfolio Theory by Harry Markowitz
-Yahoo Finance API for market data access
+- Modern Portfolio Theory by Harry Markowitz
+- Yahoo Finance API for market data access
