@@ -47,7 +47,6 @@ Years of historical data (1-10): 5
 Initial investment amount ($): 100000
 
 **Sample Output**
-
 Optimal portfolio weights
 Expected annual return
 Annual risk
@@ -57,7 +56,6 @@ Monte Carlo simulation results
 Interactive visualizations
 
 **Project Structure**
-
 src/portfolio_optimizer.py: Main implementation
 requirements.txt: Required Python packages
 examples/: Sample notebooks and use cases
@@ -65,7 +63,6 @@ docs/: Additional documentation
 tests/: Unit tests
 
 **Future Enhancements**
-
 Additional optimization objectives
 Real-time data integration
 Portfolio rebalancing suggestions
@@ -74,12 +71,13 @@ Enhanced risk metrics
 
 **Contributing**
 Feel free to fork the project and submit pull requests. For major changes, please open an issue first to discuss the proposed change.
+
 **License**
 MIT
+
 **Author**
 Aeebeh
 
-Acknowledgments
-
+**Acknowledgments**
 Modern Portfolio Theory by Harry Markowitz
 Yahoo Finance API for market data access
