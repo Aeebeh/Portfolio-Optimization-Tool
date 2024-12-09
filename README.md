@@ -50,9 +50,9 @@ A Python-based portfolio optimization tool that implements Modern Portfolio Theo
 - Interactive visualizations
 
 **Project Structure**
-portfolio-optimization/
+
 - LICENSE
-- Portfolio Optimization/
+- Portfolio Optimization
 - README.md
 - requirements.txt
 
