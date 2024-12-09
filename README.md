@@ -50,11 +50,11 @@ A Python-based portfolio optimization tool that implements Modern Portfolio Theo
 - Interactive visualizations
 
 **Project Structure**
-- src/portfolio_optimizer.py: Main implementation
--requirements.txt: Required Python packages
- - examples/: Sample notebooks and use cases
-- docs/: Additional documentation
-- tests/: Unit tests
+portfolio-optimization/
+├── LICENSE
+├── Portfolio Optimization/
+├── README.md
+└── requirements.txt
 
 **Future Enhancements**
 - Additional optimization objectives
