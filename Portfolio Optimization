@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 def get_user_inputs():
     print("\n=== Portfolio Optimizer ===")
     print("\nEnter ticker symbols separated by commas")
-    print("Example: SPY, GLD, USD")
+    print("Example: SPY, GLD, IEF")
     tickers = input("Tickers: ").replace(" ", "").upper().split(",")
 
     while True:
