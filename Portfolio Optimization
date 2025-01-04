@@ -1,4 +1,9 @@
-##Portfolio Optimization App Yfinance V1.5
+# Portfolio Optimization Application v1.6
+#
+# This application performs portfolio optimization using Modern Portfolio Theory (MPT)
+# and Monte Carlo simulation to help investors make informed decisions about asset allocation.
+# It uses historical data from Yahoo Finance to calculate optimal weights that maximize
+# the Sharpe ratio while providing risk metrics and future value projections.
 
 import numpy as np
 import pandas as pd
@@ -9,6 +14,14 @@ from scipy.optimize import minimize
 from datetime import datetime, timedelta
 
 def get_user_inputs():
+    """
+    Handles user interaction to collect necessary inputs for portfolio optimization:
+    - List of stock tickers to analyze
+    - Number of years of historical data to consider
+    - Initial investment amount
+    
+    Includes input validation to ensure data quality and prevent errors.
+    """
     print("\n=== Portfolio Optimizer ===")
     print("\nEnter ticker symbols separated by commas")
     print("Example: SPY, GLD, IEF")
@@ -35,6 +48,13 @@ def get_user_inputs():
     return tickers, years, investment
 
 def get_stock_data(tickers, start_date, end_date):
+    """
+    Fetches historical price data for the specified tickers using Yahoo Finance API.
+    Downloads closing prices for each asset within the specified date range.
+    Handles potential API errors and missing data gracefully.
+    
+    Returns a pandas DataFrame with closing prices for all valid tickers.
+    """
     data = pd.DataFrame()
     for ticker in tickers:
         try:
@@ -46,6 +66,11 @@ def get_stock_data(tickers, start_date, end_date):
     return data
 
 def calculate_portfolio_metrics(weights, returns):
+    """
+    Calculates key portfolio performance metrics using Modern Portfolio Theory:
+    - Expected annual return (annualized mean return)
+    - Portfolio risk (annualized standard deviation)
+    """
     try:
         portfolio_return = np.sum(returns.mean() * weights) * 252
         portfolio_risk = np.sqrt(np.dot(weights.T, np.dot(returns.cov() * 252, weights)))
@@ -55,6 +80,10 @@ def calculate_portfolio_metrics(weights, returns):
         return None, None
 
 def calculate_var(weights, returns, confidence_level=0.95):
+    """
+    Calculates Value at Risk (VaR) for the portfolio at specified confidence level.
+    VaR represents the potential loss that won't be exceeded with the given confidence.
+    """
     try:
         clean_returns = returns.dropna()
         if clean_returns.empty:
@@ -72,6 +101,11 @@ def calculate_var(weights, returns, confidence_level=0.95):
         return None
 
 def monte_carlo_simulation(weights, returns, initial_investment, num_simulations=1000, time_horizon=252):
+    """
+    Performs Monte Carlo simulation to project possible future portfolio values.
+    Uses multivariate normal distribution to generate random returns based on
+    historical mean and covariance.
+    """
     try:
         clean_returns = returns.dropna()
         if clean_returns.empty:
@@ -98,6 +132,10 @@ def monte_carlo_simulation(weights, returns, initial_investment, num_simulations
         return None
 
 def optimize_portfolio(returns, risk_free_rate=0.02):
+    """
+    Performs portfolio optimization using the Sharpe Ratio as the objective function.
+    Uses Sequential Least Squares Programming (SLSQP) to find the optimal weights.
+    """
     try:
         num_assets = returns.shape[1]
 
@@ -121,7 +159,12 @@ def optimize_portfolio(returns, risk_free_rate=0.02):
         return None
 
 def plot_interactive_results(portfolio_simulations, returns, optimal_weights):
-    # Generate efficient frontier points
+    """
+    Creates an interactive visualization with three panels:
+    1. Efficient Frontier plot showing risk-return tradeoff and optimal portfolio
+    2. Distribution of final portfolio values from Monte Carlo simulation
+    3. Monte Carlo simulation paths showing possible portfolio value evolution
+    """
     num_portfolios = 1000
     returns_array = []
     risk_array = []
@@ -132,10 +175,8 @@ def plot_interactive_results(portfolio_simulations, returns, optimal_weights):
         returns_array.append(portfolio_return)
         risk_array.append(portfolio_risk)
 
-    # Create 3-panel subplot
     fig = make_subplots(rows=3, cols=1, vertical_spacing=0.1)
 
-    # Plot 1: Efficient Frontier
     fig.add_trace(
         go.Scatter(x=risk_array, y=returns_array, mode='markers',
                   marker=dict(color='blue', size=4, opacity=0.5),
@@ -143,7 +184,6 @@ def plot_interactive_results(portfolio_simulations, returns, optimal_weights):
         row=1, col=1
     )
 
-    # Add optimal portfolio point
     opt_return, opt_risk = calculate_portfolio_metrics(optimal_weights, returns)
     fig.add_trace(
         go.Scatter(x=[opt_risk], y=[opt_return], mode='markers',
@@ -152,7 +192,6 @@ def plot_interactive_results(portfolio_simulations, returns, optimal_weights):
         row=1, col=1
     )
 
-    # Plot 2: Distribution
     final_values = portfolio_simulations[:, -1]
     hist = np.histogram(final_values, bins=50)
 
@@ -164,13 +203,12 @@ def plot_interactive_results(portfolio_simulations, returns, optimal_weights):
     fig.add_vline(x=np.percentile(final_values, 5), line_dash="dash",
                   line_color="red", row=2, col=1)
 
-    # Plot 3: Monte Carlo Paths
     time_points = np.arange(portfolio_simulations.shape[1])
 
     for i in range(0, portfolio_simulations.shape[0], 10):
         fig.add_trace(
             go.Scatter(x=time_points, y=portfolio_simulations[i],
-                      mode='lines', line=dict(color='blue', width=1.5),  # Updated line width here
+                      mode='lines', line=dict(color='blue', width=1.5),
                       opacity=0.1, showlegend=False),
             row=3, col=1
         )
@@ -183,7 +221,6 @@ def plot_interactive_results(portfolio_simulations, returns, optimal_weights):
         row=3, col=1
     )
 
-    # Update layout
     fig.update_layout(
         height=1200,
         hovermode='x unified',
@@ -203,6 +240,9 @@ def plot_interactive_results(portfolio_simulations, returns, optimal_weights):
     return fig
 
 def save_results(filename, results_text):
+    """
+    Saves the analysis results to a text file for future reference.
+    """
     try:
         with open(filename, 'w') as f:
             f.write(results_text)
@@ -212,9 +252,17 @@ def save_results(filename, results_text):
         return False
 
 def main():
+    """
+    Main function that orchestrates the portfolio optimization process:
+    1. Collects user inputs
+    2. Fetches and processes historical data
+    3. Performs optimization and risk analysis
+    4. Runs Monte Carlo simulation
+    5. Generates visualizations
+    6. Outputs and optionally saves results
+    """
     print("\nWelcome to the Portfolio Optimizer!")
 
-    # Get user inputs
     tickers, years, investment = get_user_inputs()
     end_date = datetime.now()
     start_date = end_date - timedelta(days=years*365)
@@ -241,13 +289,11 @@ def main():
         portfolio_simulations = monte_carlo_simulation(optimal_weights, returns, investment)
 
         if portfolio_simulations is not None:
-            # Create interactive plots
             fig = plot_interactive_results(portfolio_simulations, returns, optimal_weights)
             fig.show()
 
             final_values = portfolio_simulations[:, -1]
 
-            # Generate results text
             results_text += "=== Portfolio Analysis Results ===\n\n"
             results_text += "Optimal Portfolio Allocation:\n"
             for ticker, weight in zip(valid_tickers, optimal_weights):
@@ -283,7 +329,6 @@ def main():
             print(f"Median Portfolio Value: ${np.median(final_values):,.2f}")
             print(f"95th Percentile Portfolio Value: ${np.percentile(final_values, 95):,.2f}")
 
-            # Save results
             save = input("\nWould you like to save the results? (y/n): ").lower()
             if save == 'y':
                 filename = f"portfolio_analysis_{datetime.now().strftime('%Y%m%d_%H%M')}.txt"
