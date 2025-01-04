@@ -170,7 +170,7 @@ def plot_interactive_results(portfolio_simulations, returns, optimal_weights):
     for i in range(0, portfolio_simulations.shape[0], 10):
         fig.add_trace(
             go.Scatter(x=time_points, y=portfolio_simulations[i],
-                      mode='lines', line=dict(color='blue', width=0.5),
+                      mode='lines', line=dict(color='blue', width=1.5),  # Updated line width here
                       opacity=0.1, showlegend=False),
             row=3, col=1
         )
@@ -198,7 +198,7 @@ def plot_interactive_results(portfolio_simulations, returns, optimal_weights):
     fig.update_yaxes(title_text="Frequency", row=2, col=1)
 
     fig.update_xaxes(title_text="Trading Days", row=3, col=1)
-    fig.update_yaxes(title_text="Portfolio Value ($) After 1 Year ", row=3, col=1)
+    fig.update_yaxes(title_text="Portfolio Value ($)", row=3, col=1)
 
     return fig
 
